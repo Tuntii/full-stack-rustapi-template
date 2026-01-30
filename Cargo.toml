@@ -40,5 +40,7 @@ chrono = { version = "0.4", features = ["serde"] }
 # Environment
 dotenvy = "0.15"
 
-# Utilities
-thiserror = "1"
+
+# Validation
+rustapi-validate = "0.1"
+async-trait = "0.1"

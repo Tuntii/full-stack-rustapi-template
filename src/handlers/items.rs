@@ -3,17 +3,14 @@ use tera::Context;
 
 use crate::{
     extractors::{AppCookies, Form},
-    models::{CreateItem, ItemForm},
     middleware::get_current_user,
+    models::{CreateItem, ItemForm},
     AppState,
 };
 
 /// List all items for the current user
 #[rustapi_rs::get("/items")]
-pub async fn list_items(
-    State(state): State<AppState>,
-    cookies: AppCookies,
-) -> Response {
+pub async fn list_items(State(state): State<AppState>, cookies: AppCookies) -> Response {
     let mut context = Context::new();
 
     // Get current user from JWT
@@ -40,10 +37,7 @@ pub async fn list_items(
 
 /// Show form to create a new item
 #[rustapi_rs::get("/items/new")]
-pub async fn new_item_form(
-    State(state): State<AppState>,
-    cookies: AppCookies,
-) -> Response {
+pub async fn new_item_form(State(state): State<AppState>, cookies: AppCookies) -> Response {
     let user = match get_current_user(&state, &cookies).await {
         Some(u) => u,
         None => return Redirect::to("/login").into_response(),
@@ -72,14 +66,10 @@ pub async fn create_item(
     context.insert("user", &Some(&user));
 
     // Validate
-    if form.title.trim().is_empty() {
-        context.insert("error", "Title is required");
-        context.insert("item", &None::<()>);
-        return render_template(&state, "items/form.html", &context);
-    }
+    if let Err(validation_errors) = form.validate() {
+        let error_msg = format!("Validation error: {:?}", validation_errors);
 
-    if form.title.len() > 200 {
-        context.insert("error", "Title must be 200 characters or less");
+        context.insert("error", &error_msg);
         context.insert("item", &None::<()>);
         return render_template(&state, "items/form.html", &context);
     }
@@ -87,7 +77,10 @@ pub async fn create_item(
     let create_item = CreateItem {
         user_id: user.id,
         title: form.title.trim().to_string(),
-        description: form.description.map(|d| d.trim().to_string()).filter(|d| !d.is_empty()),
+        description: form
+            .description
+            .map(|d| d.trim().to_string())
+            .filter(|d| !d.is_empty()),
     };
 
     match state.db.create_item(create_item).await {
@@ -149,26 +142,28 @@ pub async fn update_item(
     context.insert("user", &Some(&user));
 
     // Validate
-    if form.title.trim().is_empty() {
-        // Re-fetch item for form
+    if let Err(validation_errors) = form.validate() {
         if let Ok(Some(item)) = state.db.get_item(id, user.id).await {
             context.insert("item", &Some(&item));
         }
-        context.insert("error", "Title is required");
+
+        let error_msg = format!("Validation error: {:?}", validation_errors);
+
+        context.insert("error", &error_msg);
         return render_template(&state, "items/form.html", &context);
     }
 
-    if form.title.len() > 200 {
-        if let Ok(Some(item)) = state.db.get_item(id, user.id).await {
-            context.insert("item", &Some(&item));
-        }
-        context.insert("error", "Title must be 200 characters or less");
-        return render_template(&state, "items/form.html", &context);
-    }
+    let description = form
+        .description
+        .as_deref()
+        .map(|d| d.trim())
+        .filter(|d| !d.is_empty());
 
-    let description = form.description.as_deref().map(|d| d.trim()).filter(|d| !d.is_empty());
-
-    match state.db.update_item(id, user.id, form.title.trim(), description).await {
+    match state
+        .db
+        .update_item(id, user.id, form.title.trim(), description)
+        .await
+    {
         Ok(Some(_)) => Redirect::to("/items?success=updated").into_response(),
         Ok(None) => Redirect::to("/items?error=not_found").into_response(),
         Err(e) => {
@@ -218,7 +213,9 @@ fn render_template(state: &AppState, template: &str, context: &Context) -> Respo
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::{cleanup_db, cookies_for_user, empty_cookies, header_value, setup_test_state};
+    use crate::test_utils::{
+        cleanup_db, cookies_for_user, empty_cookies, header_value, setup_test_state,
+    };
     use rustapi_rs::Path;
 
     async fn setup_user(state: &AppState) -> (i64, AppCookies) {
@@ -236,7 +233,10 @@ mod tests {
         let (state, path) = setup_test_state().await;
         let response = list_items(State(state.clone()), empty_cookies()).await;
         assert_eq!(response.status(), StatusCode::FOUND);
-        assert_eq!(header_value(&response, "Location"), Some("/login".to_string()));
+        assert_eq!(
+            header_value(&response, "Location"),
+            Some("/login".to_string())
+        );
         cleanup_db(path);
     }
 

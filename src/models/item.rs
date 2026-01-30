@@ -12,10 +12,18 @@ pub struct Item {
     pub updated_at: String,
 }
 
+use rustapi_macros::Validate;
+use rustapi_rs::prelude::*;
+
 /// Form data for creating/updating items
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct ItemForm {
+    #[validate(
+        length(min = 1, message = "Title is required"),
+        length(max = 200, message = "Title must be 200 characters or less")
+    )]
     pub title: String,
+
     pub description: Option<String>,
 }
 
