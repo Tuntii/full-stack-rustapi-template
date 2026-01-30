@@ -1,7 +1,7 @@
 use sqlx::{Pool, Sqlite, SqlitePool};
 use std::path::Path;
 
-use crate::models::{User, Item, CreateItem};
+use crate::models::{CreateItem, Item, User};
 
 /// Database connection pool wrapper
 #[derive(Clone)]
@@ -19,10 +19,10 @@ impl Database {
         }
 
         let pool = SqlitePool::connect(database_url).await?;
-        
+
         let db = Self { pool };
         db.run_migrations().await?;
-        
+
         Ok(db)
     }
 
@@ -38,7 +38,7 @@ impl Database {
                 password_hash TEXT NOT NULL,
                 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
-            "#
+            "#,
         )
         .execute(&self.pool)
         .await?;
@@ -54,7 +54,7 @@ impl Database {
                 updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             )
-            "#
+            "#,
         )
         .execute(&self.pool)
         .await?;
@@ -69,75 +69,76 @@ impl Database {
         sqlx::query("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)")
             .execute(&self.pool)
             .await?;
-        
+
         Ok(())
     }
 
     // ==================== User Operations ====================
 
     /// Create a new user
-    pub async fn create_user(&self, username: &str, email: &str, password_hash: &str) -> Result<User, sqlx::Error> {
+    pub async fn create_user(
+        &self,
+        username: &str,
+        email: &str,
+        password_hash: &str,
+    ) -> Result<User, sqlx::Error> {
         let user = sqlx::query_as::<_, User>(
             r#"
             INSERT INTO users (username, email, password_hash)
             VALUES (?, ?, ?)
             RETURNING id, username, email, password_hash, created_at
-            "#
+            "#,
         )
         .bind(username)
         .bind(email)
         .bind(password_hash)
         .fetch_one(&self.pool)
         .await?;
-        
+
         Ok(user)
     }
 
     /// Find user by username
     pub async fn find_user_by_username(&self, username: &str) -> Result<Option<User>, sqlx::Error> {
         let user = sqlx::query_as::<_, User>(
-            "SELECT id, username, email, password_hash, created_at FROM users WHERE username = ?"
+            "SELECT id, username, email, password_hash, created_at FROM users WHERE username = ?",
         )
         .bind(username)
         .fetch_optional(&self.pool)
         .await?;
-        
+
         Ok(user)
     }
 
     /// Find user by ID
     pub async fn find_user_by_id(&self, id: i64) -> Result<Option<User>, sqlx::Error> {
         let user = sqlx::query_as::<_, User>(
-            "SELECT id, username, email, password_hash, created_at FROM users WHERE id = ?"
+            "SELECT id, username, email, password_hash, created_at FROM users WHERE id = ?",
         )
         .bind(id)
         .fetch_optional(&self.pool)
         .await?;
-        
+
         Ok(user)
     }
 
     /// Check if username exists
     pub async fn username_exists(&self, username: &str) -> Result<bool, sqlx::Error> {
-        let result: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM users WHERE username = ?"
-        )
-        .bind(username)
-        .fetch_one(&self.pool)
-        .await?;
-        
+        let result: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM users WHERE username = ?")
+            .bind(username)
+            .fetch_one(&self.pool)
+            .await?;
+
         Ok(result.0 > 0)
     }
 
     /// Check if email exists
     pub async fn email_exists(&self, email: &str) -> Result<bool, sqlx::Error> {
-        let result: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM users WHERE email = ?"
-        )
-        .bind(email)
-        .fetch_one(&self.pool)
-        .await?;
-        
+        let result: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM users WHERE email = ?")
+            .bind(email)
+            .fetch_one(&self.pool)
+            .await?;
+
         Ok(result.0 > 0)
     }
 
@@ -150,14 +151,14 @@ impl Database {
             INSERT INTO items (user_id, title, description)
             VALUES (?, ?, ?)
             RETURNING id, user_id, title, description, created_at, updated_at
-            "#
+            "#,
         )
         .bind(item.user_id)
         .bind(&item.title)
         .bind(&item.description)
         .fetch_one(&self.pool)
         .await?;
-        
+
         Ok(created)
     }
 
@@ -169,12 +170,12 @@ impl Database {
             FROM items
             WHERE user_id = ?
             ORDER BY created_at DESC
-            "#
+            "#,
         )
         .bind(user_id)
         .fetch_all(&self.pool)
         .await?;
-        
+
         Ok(items)
     }
 
@@ -185,25 +186,31 @@ impl Database {
             SELECT id, user_id, title, description, created_at, updated_at
             FROM items
             WHERE id = ? AND user_id = ?
-            "#
+            "#,
         )
         .bind(id)
         .bind(user_id)
         .fetch_optional(&self.pool)
         .await?;
-        
+
         Ok(item)
     }
 
     /// Update an item
-    pub async fn update_item(&self, id: i64, user_id: i64, title: &str, description: Option<&str>) -> Result<Option<Item>, sqlx::Error> {
+    pub async fn update_item(
+        &self,
+        id: i64,
+        user_id: i64,
+        title: &str,
+        description: Option<&str>,
+    ) -> Result<Option<Item>, sqlx::Error> {
         let item = sqlx::query_as::<_, Item>(
             r#"
             UPDATE items
             SET title = ?, description = ?, updated_at = CURRENT_TIMESTAMP
             WHERE id = ? AND user_id = ?
             RETURNING id, user_id, title, description, created_at, updated_at
-            "#
+            "#,
         )
         .bind(title)
         .bind(description)
@@ -211,20 +218,18 @@ impl Database {
         .bind(user_id)
         .fetch_optional(&self.pool)
         .await?;
-        
+
         Ok(item)
     }
 
     /// Delete an item
     pub async fn delete_item(&self, id: i64, user_id: i64) -> Result<bool, sqlx::Error> {
-        let result = sqlx::query(
-            "DELETE FROM items WHERE id = ? AND user_id = ?"
-        )
-        .bind(id)
-        .bind(user_id)
-        .execute(&self.pool)
-        .await?;
-        
+        let result = sqlx::query("DELETE FROM items WHERE id = ? AND user_id = ?")
+            .bind(id)
+            .bind(user_id)
+            .execute(&self.pool)
+            .await?;
+
         Ok(result.rows_affected() > 0)
     }
 }
@@ -278,7 +283,10 @@ mod tests {
 
         assert_eq!(by_id.username, "alice");
         assert!(db.username_exists("alice").await.expect("username exists"));
-        assert!(db.email_exists("alice@example.com").await.expect("email exists"));
+        assert!(db
+            .email_exists("alice@example.com")
+            .await
+            .expect("email exists"));
 
         cleanup_db(path);
     }
@@ -301,10 +309,7 @@ mod tests {
             .await
             .expect("create item");
 
-        let items = db
-            .get_user_items(user.id)
-            .await
-            .expect("list items");
+        let items = db.get_user_items(user.id).await.expect("list items");
         assert_eq!(items.len(), 1);
         assert_eq!(items[0].title, "First");
 

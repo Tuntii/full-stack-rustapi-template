@@ -6,8 +6,8 @@ mod models;
 #[cfg(test)]
 mod test_utils;
 
-use std::sync::Arc;
 use rustapi_rs::prelude::*;
+use std::sync::Arc;
 use tera::Tera;
 
 use db::Database;
@@ -25,8 +25,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // Load environment variables
     dotenvy::dotenv().ok();
 
-    let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "sqlite:data.db?mode=rwc".to_string());
+    let database_url =
+        std::env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite:data.db?mode=rwc".to_string());
     let jwt_secret = std::env::var("JWT_SECRET")
         .unwrap_or_else(|_| "your-super-secret-key-change-in-production".to_string());
     let host = std::env::var("SERVER_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());

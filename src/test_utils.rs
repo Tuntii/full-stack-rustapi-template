@@ -1,5 +1,9 @@
 #[cfg(test)]
-use std::{path::PathBuf, sync::Arc, time::{SystemTime, UNIX_EPOCH}};
+use std::{
+    path::PathBuf,
+    sync::Arc,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 #[cfg(test)]
 use cookie::{Cookie, CookieJar};
@@ -11,12 +15,7 @@ use rustapi_rs::{Cookies, Response};
 use tera::Tera;
 
 #[cfg(test)]
-use crate::{
-    db::Database,
-    extractors::AppCookies,
-    models::Claims,
-    AppState,
-};
+use crate::{db::Database, extractors::AppCookies, models::Claims, AppState};
 
 #[cfg(test)]
 pub async fn setup_test_state() -> (AppState, PathBuf) {
@@ -62,8 +61,12 @@ pub fn cookies_for_user(secret: &str, user_id: i64, username: &str) -> AppCookie
         iat: now,
     };
 
-    let token = encode(&Header::default(), &claims, &EncodingKey::from_secret(secret.as_bytes()))
-        .expect("encode token");
+    let token = encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(secret.as_bytes()),
+    )
+    .expect("encode token");
 
     let mut jar = CookieJar::new();
     jar.add(Cookie::new("token", token));

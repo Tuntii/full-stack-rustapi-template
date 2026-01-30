@@ -1,16 +1,13 @@
 use rustapi_rs::prelude::*;
 use tera::Context;
 
-use crate::{extractors::AppCookies, models::UserInfo, middleware::get_current_user, AppState};
+use crate::{extractors::AppCookies, middleware::get_current_user, models::UserInfo, AppState};
 
 /// Home page handler
 #[rustapi_rs::get("/")]
-pub async fn home(
-    State(state): State<AppState>,
-    cookies: AppCookies,
-) -> Response {
+pub async fn home(State(state): State<AppState>, cookies: AppCookies) -> Response {
     let mut context = Context::new();
-    
+
     // Try to get current user (optional)
     if let Some(user) = get_current_user(&state, &cookies).await {
         context.insert("user", &Some(&user));

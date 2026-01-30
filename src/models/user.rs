@@ -49,8 +49,8 @@ pub struct LoginForm {
 /// JWT claims structure
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    pub sub: i64,       // user id
+    pub sub: i64, // user id
     pub username: String,
-    pub exp: i64,       // expiration timestamp
-    pub iat: i64,       // issued at timestamp
+    pub exp: i64, // expiration timestamp
+    pub iat: i64, // issued at timestamp
 }

@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2021"
 description = "A full-stack CRUD application with Basic Auth using RustAPI"
 authors = ["tuntii"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/tuntii/basic-crud-ops"
+homepage = "https://github.com/tuntii/basic-crud-ops"
 
 [dependencies]
 # RustAPI Web Framework

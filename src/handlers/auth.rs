@@ -2,9 +2,9 @@ use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
 };
+use jsonwebtoken::{encode, EncodingKey, Header};
 use rustapi_rs::prelude::*;
 use rustapi_rs::ResponseBody;
-use jsonwebtoken::{encode, Header, EncodingKey};
 use tera::Context;
 
 use crate::{
@@ -18,7 +18,7 @@ use crate::{
 pub async fn show_login(State(state): State<AppState>) -> Response {
     let mut context = Context::new();
     context.insert("user", &None::<UserInfo>);
-    
+
     match state.tera.render("auth/login.html", &context) {
         Ok(html) => Html(html).into_response(),
         Err(e) => {
@@ -30,10 +30,7 @@ pub async fn show_login(State(state): State<AppState>) -> Response {
 
 /// Handle login form submission
 #[rustapi_rs::post("/login")]
-pub async fn handle_login(
-    State(state): State<AppState>,
-    Form(form): Form<LoginForm>,
-) -> Response {
+pub async fn handle_login(State(state): State<AppState>, Form(form): Form<LoginForm>) -> Response {
     let mut context = Context::new();
     context.insert("user", &None::<UserInfo>);
     context.insert("username", &form.username);
@@ -105,7 +102,7 @@ pub async fn handle_login(
 pub async fn show_register(State(state): State<AppState>) -> Response {
     let mut context = Context::new();
     context.insert("user", &None::<UserInfo>);
-    
+
     match state.tera.render("auth/register.html", &context) {
         Ok(html) => Html(html).into_response(),
         Err(e) => {
@@ -243,9 +240,15 @@ fn render_register(tera: &tera::Tera, context: &Context) -> Response {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{extractors::Form, models::{LoginForm, RegisterForm}};
     use crate::test_utils::{cleanup_db, header_value, setup_test_state};
-    use argon2::{password_hash::{rand_core::OsRng, PasswordHasher, SaltString}, Argon2};
+    use crate::{
+        extractors::Form,
+        models::{LoginForm, RegisterForm},
+    };
+    use argon2::{
+        password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
+        Argon2,
+    };
 
     fn hash_password(password: &str) -> String {
         let salt = SaltString::generate(&mut OsRng);
@@ -284,7 +287,11 @@ mod tests {
         let response = handle_register(State(state.clone()), Form(form)).await;
         assert_eq!(response.status(), StatusCode::OK);
 
-        let exists = state.db.username_exists("ab").await.expect("username exists");
+        let exists = state
+            .db
+            .username_exists("ab")
+            .await
+            .expect("username exists");
         assert!(!exists);
         cleanup_db(path);
     }
@@ -301,9 +308,16 @@ mod tests {
 
         let response = handle_register(State(state.clone()), Form(form)).await;
         assert_eq!(response.status(), StatusCode::FOUND);
-        assert_eq!(header_value(&response, "Location"), Some("/login?registered=true".to_string()));
+        assert_eq!(
+            header_value(&response, "Location"),
+            Some("/login?registered=true".to_string())
+        );
 
-        let exists = state.db.username_exists("alice").await.expect("username exists");
+        let exists = state
+            .db
+            .username_exists("alice")
+            .await
+            .expect("username exists");
         assert!(exists);
         cleanup_db(path);
     }
@@ -351,7 +365,10 @@ mod tests {
         .await;
 
         assert_eq!(response.status(), StatusCode::SEE_OTHER);
-        assert_eq!(header_value(&response, "Location"), Some("/items".to_string()));
+        assert_eq!(
+            header_value(&response, "Location"),
+            Some("/items".to_string())
+        );
         let set_cookie = header_value(&response, "Set-Cookie").unwrap_or_default();
         assert!(set_cookie.contains("token="));
         cleanup_db(path);
