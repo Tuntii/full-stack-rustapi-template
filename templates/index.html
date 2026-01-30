@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome - CRUD App{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1>Welcome to CRUD App</h1>
+    <p>A simple full-stack application built with RustAPI, SQLite, and Basic Auth</p>
+    
+    {% if user %}
+        <a href="/items" class="btn btn-primary btn-lg">View My Items</a>
+    {% else %}
+        <div class="hero-actions">
+            <a href="/register" class="btn btn-primary btn-lg">Get Started</a>
+            <a href="/login" class="btn btn-outline btn-lg">Login</a>
+        </div>
+    {% endif %}
+</div>
+
+<section class="features">
+    <h2>Features</h2>
+    <div class="feature-grid">
+        <div class="feature-card">
+            <span class="feature-icon">🔐</span>
+            <h3>Secure Authentication</h3>
+            <p>JWT-based authentication with password hashing using Argon2</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">📝</span>
+            <h3>Full CRUD Operations</h3>
+            <p>Create, Read, Update, and Delete your items easily</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">🗄️</span>
+            <h3>SQLite Database</h3>
+            <p>Local file-based database for easy setup and portability</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">⚡</span>
+            <h3>Blazing Fast</h3>
+            <p>Built with Rust for maximum performance</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

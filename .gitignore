@@ -1,0 +1,22 @@
+# Build artifacts
+/target/
+Cargo.lock
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# Environment
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+/pg-social-backend

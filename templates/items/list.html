@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}My Items - CRUD App{% endblock %}
+
+{% block content %}
+<div class="items-header">
+    <h1>My Items</h1>
+    <a href="/items/new" class="btn btn-primary">+ New Item</a>
+</div>
+
+{% if success %}
+<div class="alert alert-success">
+    {{ success }}
+</div>
+{% endif %}
+
+{% if error %}
+<div class="alert alert-error">
+    {{ error }}
+</div>
+{% endif %}
+
+{% if items | length > 0 %}
+<div class="items-grid">
+    {% for item in items %}
+    <div class="item-card">
+        <div class="item-content">
+            <h3>{{ item.title }}</h3>
+            <p>{{ item.description | default(value="No description") }}</p>
+            <span class="item-meta">Created: {{ item.created_at }}</span>
+        </div>
+        <div class="item-actions">
+            <a href="/items/{{ item.id }}/edit" class="btn btn-outline btn-sm">Edit</a>
+            <form action="/items/{{ item.id }}/delete" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this item?');">
+                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <h2>No items yet</h2>
+    <p>Create your first item to get started!</p>
+    <a href="/items/new" class="btn btn-primary">+ Create Item</a>
+</div>
+{% endif %}
+{% endblock %}

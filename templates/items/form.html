@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}{% if item %}Edit Item{% else %}New Item{% endif %} - CRUD App{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1>{% if item %}Edit Item{% else %}Create New Item{% endif %}</h1>
+    
+    {% if error %}
+    <div class="alert alert-error">
+        {{ error }}
+    </div>
+    {% endif %}
+    
+    <form method="POST" action="{% if item %}/items/{{ item.id }}{% else %}/items{% endif %}">
+        <div class="form-group">
+            <label for="title">Title</label>
+            <input 
+                type="text" 
+                id="title" 
+                name="title" 
+                placeholder="Enter item title"
+                value="{{ item.title | default(value='') }}"
+                maxlength="200"
+                required 
+                autofocus
+            >
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea 
+                id="description" 
+                name="description" 
+                placeholder="Enter item description (optional)"
+                maxlength="1000"
+            >{{ item.description | default(value='') }}</textarea>
+        </div>
+        
+        <button type="submit" class="btn btn-primary form-submit">
+            {% if item %}Update Item{% else %}Create Item{% endif %}
+        </button>
+    </form>
+    
+    <div class="form-footer">
+        <a href="/items">← Back to Items</a>
+    </div>
+</div>
+{% endblock %}
